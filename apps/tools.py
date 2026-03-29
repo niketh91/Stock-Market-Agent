@@ -2,6 +2,8 @@ import os
 import pandas as pd
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.sql import StatementState
+from dotenv import load_dotenv
+load_dotenv()  # loads .env if present, silently skips if not found
 
 # ── Connection config from environment variables ─────────────────
 WAREHOUSE_ID      = os.getenv("DATABRICKS_WAREHOUSE_ID")
@@ -16,8 +18,7 @@ w = WorkspaceClient()
 def run_query(sql: str) -> pd.DataFrame:
     """
     Executes a SQL statement against the warehouse and returns
-    the result as a pandas DataFrame. Returns empty DataFrame
-    with no columns if the result is empty.
+    the result as a pandas DataFrame.
     """
     response = w.statement_execution.execute_statement(
         warehouse_id = WAREHOUSE_ID,
@@ -29,13 +30,25 @@ def run_query(sql: str) -> pd.DataFrame:
         raise RuntimeError(f"Query failed: {response.status.error}")
 
     # Handle empty result
-    if not response.result or not response.result.data_array:
-        cols = [c.name for c in response.manifest.schema.columns] \
-               if response.manifest and response.manifest.schema else []
+    if (not response.result or 
+        not response.result.data_array or 
+        len(response.result.data_array) == 0):
+        cols = []
+        if response.manifest and response.manifest.schema:
+            cols = [c.name for c in response.manifest.schema.columns]
         return pd.DataFrame(columns=cols)
 
+    # Extract column names
     cols = [c.name for c in response.manifest.schema.columns]
-    rows = [r.values for r in response.result.data_array]
+
+    # data_array is a list of lists in newer SDK versions
+    rows = []
+    for r in response.result.data_array:
+        if hasattr(r, 'values'):
+            rows.append(r.values)  # older SDK
+        else:
+            rows.append(list(r))   # newer SDK — r is already a list
+
     return pd.DataFrame(rows, columns=cols)
 
 # ── Helper: get latest trade date ───────────────────────────────

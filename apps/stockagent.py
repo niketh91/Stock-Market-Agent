@@ -159,18 +159,34 @@ def run_agent(user_message: str,
     """
     trade_date = get_latest_date()
 
+    print(f"run_agent called with: {user_message}")
+    print(f"chat_history length: {len(chat_history)}")
+
     # Build system prompt with today's date injected
     system_prompt = SystemMessage(
         content=SYSTEM_PROMPT_TEMPLATE.format(trade_date=trade_date)
     )
 
-    # Reconstruct message history from Gradio chat history
     messages = [system_prompt]
-    for human, assistant in chat_history:
-        messages.append(HumanMessage(content=human))
-        if assistant:
-            from langchain_core.messages import AIMessage
-            messages.append(AIMessage(content=assistant))
+
+    # Handle Gradio 5.x dict format {"role": ..., "content": ...}
+    # and legacy tuple format (human, assistant)
+    for item in chat_history:
+        if isinstance(item, dict):
+            role    = item.get("role", "")
+            content = item.get("content", "")
+            if role == "user":
+                messages.append(HumanMessage(content=content))
+            elif role == "assistant":
+                from langchain_core.messages import AIMessage
+                messages.append(AIMessage(content=content))
+        elif isinstance(item, (list, tuple)) and len(item) == 2:
+            human, assistant = item
+            if human:
+                messages.append(HumanMessage(content=human))
+            if assistant:
+                from langchain_core.messages import AIMessage
+                messages.append(AIMessage(content=assistant))
 
     # Add current user message
     messages.append(HumanMessage(content=user_message))
@@ -179,14 +195,20 @@ def run_agent(user_message: str,
     iteration = 0
     while iteration < max_iterations:
         iteration += 1
+        
+        print(f"\n--- Iteration {iteration} ---")
 
         response = llm_with_tools.invoke(messages)
         messages.append(response)
+
+        print(f"tool_calls: {response.tool_calls}")
+        print(f"content preview: {response.content[:100] if response.content else 'empty'}")
 
         if response.tool_calls:
             for tool_call in response.tool_calls:
                 tool_name   = tool_call["name"]
                 tool_args   = tool_call["args"]
+                print(f"Calling tool: {tool_name} with {tool_args}")
                 tool_fn     = tool_map[tool_name]
                 tool_result = tool_fn.invoke(tool_args)
 
@@ -197,14 +219,10 @@ def run_agent(user_message: str,
         else:
             # LLM finished reasoning — extract response
             response_text = response.content
-
-            # Append to Gradio chat history
-            chat_history.append((user_message, response_text))
             return response_text, chat_history
 
     # Safety fallback if max iterations hit
     fallback = "I reached my reasoning limit. Please try a more specific question."
-    chat_history.append((user_message, fallback))
     return fallback, chat_history
 
 

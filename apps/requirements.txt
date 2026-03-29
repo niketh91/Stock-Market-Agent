@@ -2,7 +2,8 @@ databricks-sdk>=0.20.0
 databricks-langchain>=0.3.1
 langchain>=0.3.14
 langchain-core>=0.3.29
-gradio>=4.0.0
+gradio==5.23.3
 pandas>=2.0.0
 typing_extensions>=4.12.2
 protobuf>=3.20,<6
+python-dotenv>=1.0.0

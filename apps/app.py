@@ -1,96 +1,69 @@
 import os
 import gradio as gr
-from agent import run_agent
+from stockagent import run_agent
 
-# ── App config ───────────────────────────────────────────────────
-APP_TITLE       = "Stock Market Signal Agent"
+APP_TITLE = "TickerPulse💲"
+
 APP_DESCRIPTION = """
-Ask me about today's stock signals, specific tickers, or correlated pairs.
-
-**Example questions:**
-- What signals fired today?
-- Tell me about AAPL
-- Which tickers move with NVDA?
-- Are there any overbought tickers right now?
-- Which tickers had a regime change today?
+<div style='text-align: center; padding: 8px 0;'>
+    <span style='font-size: 1.1em; color: #4A90D9;'>Real-time market intelligence across 15 U.S. equities</span><br>
+    <span style='font-size: 0.9em; color: #888;'>Powered by a live Medallion data pipeline — Bronze, Silver, and Gold — refreshed daily after market close</span>
+</div>
 """
 
-# ── Chat handler ─────────────────────────────────────────────────
-def chat(user_message: str, history: list) -> tuple[str, list]:
-    """
-    Gradio chat handler. Receives the user message and full
-    chat history, passes them to the agent, and returns the
-    updated history for Gradio to render.
-    """
+FOOTER = """
+<div style='text-align: center; padding: 16px 0 4px 0; font-size: 0.82em; color: #888; border-top: 1px solid #e0e0e0; margin-top: 16px;'>
+    TickerPulse &nbsp;·&nbsp; 2026 Databricks Winter Data Engineering Bootcamp
+    &nbsp;·&nbsp; Powered by Meta Llama 3.3 70B Instruct
+    &nbsp;·&nbsp; Built by Sriniketh Muralikrishna
+</div>
+"""
+
+# Gradio 5.x ChatInterface manages history internally
+# Function only needs to accept message and history,
+# and return just the response string
+def chat(user_message: str, history: list) -> str:
     if not user_message or not user_message.strip():
-        return "", history
+        return "Please ask a question."
+    
+    # Debug — print exactly what Gradio passes
+    print(f"user_message: {user_message}")
+    print(f"history type: {type(history)}")
+    print(f"history length: {len(history)}")
+    print(f"history content: {history}")
 
     try:
-        response, updated_history = run_agent(
+        response, _ = run_agent(
             user_message = user_message,
             chat_history = history,
         )
-        return "", updated_history
-
+        return response
     except Exception as e:
-        error_msg = f"Something went wrong: {str(e)}"
-        history.append((user_message, error_msg))
-        return "", history
+        return f"Something went wrong: {str(e)}"
 
-# ── Gradio UI ────────────────────────────────────────────────────
-with gr.Blocks(title=APP_TITLE) as app:
+demo = gr.ChatInterface(
+    fn       = chat,
+    title    = APP_TITLE,
+    description = APP_DESCRIPTION,
+    examples = [
+        "What signals fired today?",
+        "Tell me about AAPL",
+        "Which tickers move with NVDA?",
+        "Are there any overbought tickers right now?",
+        "Which tickers had a regime change today?",
+        "What are the most volatile tickers today?",
+        "Are any tickers showing a strong buy signal?",
+        "Which pairs of stocks are moving together today?",
+    ],
+)
 
-    gr.Markdown(f"# {APP_TITLE}")
-    gr.Markdown(APP_DESCRIPTION)
-
-    chatbot = gr.Chatbot(
-        label       = "Stock Signal Agent",
-        height      = 500,
-        show_copy_button = True,
-    )
-
-    with gr.Row():
-        msg_box = gr.Textbox(
-            placeholder = "Ask about today's signals, a specific ticker, or correlated pairs...",
-            label       = "Your question",
-            scale       = 9,
-            autofocus   = True,
-        )
-        submit_btn = gr.Button("Send", scale=1, variant="primary")
-
-    with gr.Row():
-        clear_btn = gr.Button("Clear conversation", variant="secondary")
-
-    gr.Examples(
-        examples = [
-            "What signals fired today?",
-            "Tell me about AAPL",
-            "Which tickers move with NVDA?",
-            "Are there any overbought tickers right now?",
-            "Which tickers had a regime change today?",
-            "What are the most volatile tickers today?",
-        ],
-        inputs = msg_box,
-        label  = "Example questions",
-    )
-
-    # ── Event handlers ───────────────────────────────────────────
-    submit_btn.click(
-        fn      = chat,
-        inputs  = [msg_box, chatbot],
-        outputs = [msg_box, chatbot],
-    )
-
-    msg_box.submit(
-        fn      = chat,
-        inputs  = [msg_box, chatbot],
-        outputs = [msg_box, chatbot],
-    )
-
-    clear_btn.click(
-        fn      = lambda: ([], ""),
-        outputs = [chatbot, msg_box],
-    )
+with demo:
+    gr.HTML(FOOTER)
 
 if __name__ == "__main__":
-    app.launch()
+    demo.launch(
+        # server_name = "0.0.0.0",
+        # server_port = 8080,
+        share       = True,
+        allowed_paths = ["."]
+    )
