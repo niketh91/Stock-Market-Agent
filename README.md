@@ -359,13 +359,13 @@ Stock-Market-Agent/
 Store your Polygon.io API key in Databricks Secrets — never hardcode it:
 
 ```bash
-databricks secrets create-scope polygon_sm
-databricks secrets put-secret polygon_sm polygon_api_key
+databricks secrets create-scope <SCOPE_NAME>
+databricks secrets put-secret <SCOPE_NAME> <KEY>
 ```
 
 Access in notebooks:
 ```python
-POLYGON_API_KEY = dbutils.secrets.get(scope="polygon_sm", key="polygon_api_key")
+POLYGON_API_KEY = dbutils.secrets.get(scope=SCOPE_NAME, key=KEY)
 ```
 
 ### Environment Variables for Databricks App
