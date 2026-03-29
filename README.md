@@ -2,7 +2,7 @@
 
 > A production-grade, real-time stock analytics pipeline built on Databricks, powered by an autonomous AI agent that monitors 15 U.S. equities and generates trading signals daily.
 
-![image_1774812176231.png](./image_1774812176231.png "image_1774812176231.png")
+![image_1774812176231.png](./screenshots/image_1774812176231.png "image_1774812176231.png")
 
 ---
 
@@ -16,7 +16,7 @@ The project is interactive — a Gradio chat UI (deployed as a Databricks App) l
 
 ## Live Demo
 
-![image_1774812241687.png](./image_1774812241687.png "image_1774812241687.png")
+![image_1774812241687.png](./screenshots/image_1774812241687.png "image_1774812241687.png")
 
 **Example questions you can ask:**
 - *"What signals fired today?"*
@@ -254,7 +254,7 @@ Every signal the agent fires is written as a structured row:
 
 The full pipeline runs as a scheduled **Databricks Workflow** every day at **5:00 PM ET** after market close, executing all five notebooks in sequence:
 
-![image_1774812336404.png](./image_1774812336404.png "image_1774812336404.png")
+![image_1774812336404.png](./screenshots/image_1774812336404.png "image_1774812336404.png")
 
 | Task | Notebook | Output |
 |------|----------|--------|
@@ -270,7 +270,7 @@ The full pipeline runs as a scheduled **Databricks Workflow** every day at **5:0
 
 TickerPulse is deployed as a **Databricks App** — a native web app hosted inside the Databricks workspace. It provides a conversational interface to the agent built with **Gradio 5.x**.
 
-![image_1774812176231.png](./image_1774812176231.png "image_1774812176231.png")
+![image_1774812176231.png](./screenshots/image_1774812176231.png "image_1774812176231.png")
 
 ### Features
 - Natural language chat with the agent
@@ -400,7 +400,7 @@ DATABRICKS_LLM_ENDPOINT    databricks-meta-llama-3-3-70b-instruct
 
 ## Sample Alerts Output
 
-![image_1774812474779.png](./image_1774812474779.png "image_1774812474779.png")
+![image_1774812474779.png](./screenshots/image_1774812474779.png "image_1774812474779.png")
 
 ---
 
