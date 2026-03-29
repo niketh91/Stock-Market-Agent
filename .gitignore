@@ -226,6 +226,3 @@ venv/
 
 # Notebooks checkpoints
 .ipynb_checkpoints/
-
-#Screenshots
-*.png
